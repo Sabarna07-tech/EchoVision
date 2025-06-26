@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.EchoVision" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+    Base application theme. This theme inherits from Theme.AppCompat.Light.NoActionBar,
+    which is a valid theme for an AppCompatActivity and will resolve the crash.
+    -->
+    <style name="Theme.EchoVision" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- You can customize your theme here in the future. -->
+    </style>
 </resources>

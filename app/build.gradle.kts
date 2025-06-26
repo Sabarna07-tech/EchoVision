@@ -1,19 +1,12 @@
-// File: app/build.gradle.kts (Module :app)
-// This file manages your app's dependencies.
-// We are adding the necessary CameraX libraries here.
-// Copy the `dependencies` block into your file.
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
 android {
-    namespace = "com.example.echovision" // Make sure this matches your project's package name
+    namespace = "com.example.echovision"
     compileSdk = 34
-    buildFeatures {
-        viewBinding = true
-    }
+
     defaultConfig {
         applicationId = "com.example.echovision"
         minSdk = 24
@@ -39,6 +32,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+    buildFeatures {
+        viewBinding = true
     }
 }
 
