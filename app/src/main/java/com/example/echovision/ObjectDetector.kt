@@ -1,10 +1,13 @@
+// File: app/src/main/java/com/example/echovision/ObjectDetector.kt
 package com.example.echovision
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.RectF
+import android.util.Log
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
@@ -13,7 +16,7 @@ class ObjectDetector(
     private val context: Context,
     private val detectorListener: DetectorListener?
 ) {
-    private var interpreter: Interpreter
+    private var interpreter: Interpreter? = null
     private val labels = mutableListOf<String>()
 
     private var tensorWidth = 0
@@ -22,10 +25,18 @@ class ObjectDetector(
     private var numElements = 0
 
     init {
-        val model = loadModelFile(context)
-        interpreter = Interpreter(model)
-        initModelShape()
-        loadLabels()
+        try {
+            // Let's add a debug log to see what files are in the assets folder
+            val assetList = context.assets.list("")
+            Log.d("ObjectDetector", "DEBUG: Listing assets: ${assetList?.joinToString()}")
+
+            val model = loadModelFile(context)
+            interpreter = Interpreter(model)
+            initModelShape()
+            loadLabels()
+        } catch (e: IOException) {
+            Log.e("ObjectDetector", "Error initializing object detector: ", e)
+        }
     }
 
     private fun loadModelFile(context: Context): ByteBuffer {
@@ -44,22 +55,28 @@ class ObjectDetector(
     }
 
     private fun initModelShape() {
-        val inputTensor = interpreter.getInputTensor(0)
-        val inputShape = inputTensor.shape()
-        tensorWidth = inputShape[1]
-        tensorHeight = inputShape[2]
+        interpreter?.let {
+            val inputTensor = it.getInputTensor(0)
+            val inputShape = inputTensor.shape()
+            tensorWidth = inputShape[1]
+            tensorHeight = inputShape[2]
 
-        val outputTensor = interpreter.getOutputTensor(0)
-        val outputShape = outputTensor.shape()
-        numChannel = outputShape[1]
-        numElements = outputShape[2]
+            val outputTensor = it.getOutputTensor(0)
+            val outputShape = outputTensor.shape()
+            numChannel = outputShape[1]
+            numElements = outputShape[2]
+        }
     }
 
     fun detect(image: Bitmap) {
+        if (interpreter == null) {
+            return
+        }
+
         val resizedBitmap = Bitmap.createScaledBitmap(image, tensorWidth, tensorHeight, false)
         val byteBuffer = bitmapToByteBuffer(resizedBitmap)
         val output = Array(1) { Array(numElements) { FloatArray(numChannel) } }
-        interpreter.run(byteBuffer, output)
+        interpreter?.run(byteBuffer, output)
         val detections = processOutput(output[0])
         detectorListener?.onResults(detections)
     }

@@ -1,9 +1,8 @@
 // File: app/src/main/java/com/example/echovision/MainActivity.kt
-// This is the updated code that includes object detection.
+// FINAL VERSION: This fixes the threading issue.
 package com.example.echovision
 
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -52,13 +51,16 @@ class MainActivity : AppCompatActivity(), ObjectDetector.DetectorListener {
 
             val imageAnalyzer = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .build()
                 .also {
                     it.setAnalyzer(cameraExecutor) { image ->
-                        val bitmap = viewBinding.viewFinder.bitmap
-                        if (bitmap != null) {
-                            objectDetector.detect(bitmap)
+                        // The camera provides images on a background thread.
+                        // We need to get the bitmap on the main thread.
+                        runOnUiThread {
+                            val bitmap = viewBinding.viewFinder.bitmap
+                            if (bitmap != null) {
+                                objectDetector.detect(bitmap)
+                            }
                         }
                         image.close()
                     }
